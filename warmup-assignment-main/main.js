@@ -205,7 +205,6 @@ function addShiftRecord(textFile, shiftObj) {
     return newRecord;
 }
 
-
 // ============================================================
 // Function 6: setBonus(textFile, driverID, date, newValue)
 // textFile: (typeof string) path to shifts text file
@@ -331,41 +330,47 @@ return `${hours}:${minutes}:${seconds}`;
 // ============================================================
 function getRequiredHoursPerMonth(textFile, rateFile, bonusCount, driverID, month) {
 
-const fs = require("fs");
+let rateData = fs.readFileSync(rateFile,"utf8").trim().split("\n");
+
+let dayOff = "";
+
+for (let i = 0; i < rateData.length; i++) {
+let parts = rateData[i].split(",");
+if (parts[0] === driverID) {
+dayOff = parts[1];
+}
+}
 
 let shiftData = fs.readFileSync(textFile,"utf8").trim().split("\n");
-let shiftCount = 0;
+
+let totalSeconds = 0;
 
 for (let i = 1; i < shiftData.length; i++) {
 
 let parts = shiftData[i].split(",");
+
 let id = parts[0];
 let date = parts[2];
+let day = new Date(date).toLocaleDateString("en-US",{ weekday: "long"});
 let fileMonth = Number(date.split("-")[1]);
 
 if (id === driverID && fileMonth === month) {
-shiftCount++;
+
+if (day === dayOff) {
+continue;
+}
+
+if (date >= "2025-04-10" && date <= "2025-04-30") {
+totalSeconds += 6 * 3600;
+} else {
+totalSeconds += (8 * 3600) + (24 * 60);
 }
 
 }
 
-let rateData = fs.readFileSync(rateFile,"utf8").trim().split("\n");
-
-let requiredHours = 0;
-
-for (let i = 0; i < rateData.length; i++) {
-
-let parts = rateData[i].split(",");
-
-if (parts[0] === driverID) {
-requiredHours = Number(parts[3]);
 }
 
-}
-
-let totalHours = (shiftCount * requiredHours) - (bonusCount * 2);
-
-let totalSeconds = totalHours * 3600;
+totalSeconds -= bonusCount * 2 * 3600;
 
 let h = Math.floor(totalSeconds / 3600);
 let m = Math.floor((totalSeconds % 3600) / 60);
@@ -387,16 +392,16 @@ return `${h}:${m}:${s}`;
 // ============================================================
 function getNetPay(driverID, actualHours, requiredHours, rateFile) {
 
-const fs = require("fs");
-
 let data = fs.readFileSync(rateFile,"utf8").trim().split("\n");
 
 let basePay = 0;
+let tier = 0;
 
 for (let i = 0; i < data.length; i++) {
 let parts = data[i].split(",");
 if (parts[0] === driverID) {
 basePay = Number(parts[2]);
+tier = Number(parts[3]);
 }
 }
 
@@ -408,20 +413,34 @@ return Number(p[0])*3600 + Number(p[1])*60 + Number(p[2]);
 let actualSec = toSeconds(actualHours);
 let requiredSec = toSeconds(requiredHours);
 
-if (actualSec >= requiredSec) {
+let missingSec = requiredSec - actualSec;
+
+if (missingSec <= 0) {
 return basePay;
 }
 
-let diffHours = (requiredSec - actualSec) / 3600;
+let missingHours = missingSec / 3600;
 
-if (diffHours <= 24) {
+let allowed = 0;
+
+if (tier === 1) allowed = 50;
+if (tier === 2) allowed = 20;
+if (tier === 3) allowed = 10;
+if (tier === 4) allowed = 3;
+
+missingHours -= allowed;
+
+if (missingHours <= 0) {
 return basePay;
 }
 
-let deduction = Math.floor((diffHours - 24) * 10);
+missingHours = Math.floor(missingHours);
 
-return basePay - deduction;
+let deductionRatePerHour = Math.floor(basePay / 185);
 
+let salaryDeduction = missingHours * deductionRatePerHour;
+
+return basePay - salaryDeduction;
 }
 
 module.exports = {

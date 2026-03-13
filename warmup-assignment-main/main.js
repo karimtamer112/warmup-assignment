@@ -233,13 +233,6 @@ lines[i] = parts.join(",");
 fs.writeFileSync(textFile, lines.join("\n"));
 }
 
-console.log(addShiftRecord("./PublicTestFiles/shiftsPublic.txt", {
-    driverID: "D1001",
-    driverName: "Ahmed Hassan",
-    date: "2025-04-20",
-    startTime: "6:32:26 am",
-    endTime: "7:26:20 pm"
-}));
 // ============================================================
 // Function 7: countBonusPerMonth(textFile, driverID, month)
 // textFile: (typeof string) path to shifts text file
@@ -248,7 +241,34 @@ console.log(addShiftRecord("./PublicTestFiles/shiftsPublic.txt", {
 // Returns: number (-1 if driverID not found)
 // ============================================================
 function countBonusPerMonth(textFile, driverID, month) {
-    // TODO: Implement this function
+
+const fs = require("fs");
+
+let data = fs.readFileSync(textFile,"utf8");
+let lines = data.trim().split("\n");
+let count = 0;
+let found = false;
+
+for (let i = 1; i < lines.length; i++) {
+
+let parts = lines[i].split(",");
+let id = parts[0];
+let date = parts[2];
+let bonus = parts[9];
+let fileMonth = date.split("-")[1];
+
+if (id === driverID) {
+found = true;
+
+if ((fileMonth === month || fileMonth === month.padStart(2,"0")) && bonus === "true") {
+count++;
+}
+}
+}
+if (!found) {
+return -1;
+}
+return count;
 }
 
 // ============================================================

@@ -330,7 +330,51 @@ return `${hours}:${minutes}:${seconds}`;
 // Returns: string formatted as hhh:mm:ss
 // ============================================================
 function getRequiredHoursPerMonth(textFile, rateFile, bonusCount, driverID, month) {
-    // TODO: Implement this function
+
+const fs = require("fs");
+
+let shiftData = fs.readFileSync(textFile,"utf8").trim().split("\n");
+let shiftCount = 0;
+
+for (let i = 1; i < shiftData.length; i++) {
+
+let parts = shiftData[i].split(",");
+let id = parts[0];
+let date = parts[2];
+let fileMonth = Number(date.split("-")[1]);
+
+if (id === driverID && fileMonth === month) {
+shiftCount++;
+}
+
+}
+
+let rateData = fs.readFileSync(rateFile,"utf8").trim().split("\n");
+
+let requiredHours = 0;
+
+for (let i = 0; i < rateData.length; i++) {
+
+let parts = rateData[i].split(",");
+
+if (parts[0] === driverID) {
+requiredHours = Number(parts[3]);
+}
+
+}
+
+let totalHours = (shiftCount * requiredHours) - (bonusCount * 2);
+
+let totalSeconds = totalHours * 3600;
+
+let h = Math.floor(totalSeconds / 3600);
+let m = Math.floor((totalSeconds % 3600) / 60);
+let s = totalSeconds % 60;
+
+m = m.toString().padStart(2,"0");
+s = s.toString().padStart(2,"0");
+
+return `${h}:${m}:${s}`;
 }
 
 // ============================================================

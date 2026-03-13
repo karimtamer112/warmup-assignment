@@ -279,7 +279,45 @@ return count;
 // Returns: string formatted as hhh:mm:ss
 // ============================================================
 function getTotalActiveHoursPerMonth(textFile, driverID, month) {
-    // TODO: Implement this function
+
+const fs = require("fs");
+
+let data = fs.readFileSync(textFile,"utf8");
+let lines = data.trim().split("\n");
+
+let totalSeconds = 0;
+
+for (let i = 1; i < lines.length; i++) {
+
+let parts = lines[i].split(",");
+
+let id = parts[0];
+let date = parts[2];
+let activeTime = parts[7];
+
+let fileMonth = Number(date.split("-")[1]);
+
+if (id === driverID && fileMonth === month) {
+
+let timeParts = activeTime.split(":");
+let h = Number(timeParts[0]);
+let m = Number(timeParts[1]);
+let s = Number(timeParts[2]);
+
+totalSeconds += h*3600 + m*60 + s;
+
+}
+
+}
+
+let hours = Math.floor(totalSeconds/3600);
+let minutes = Math.floor((totalSeconds%3600)/60);
+let seconds = totalSeconds%60;
+
+minutes = minutes.toString().padStart(2,"0");
+seconds = seconds.toString().padStart(2,"0");
+
+return `${hours}:${minutes}:${seconds}`;
 }
 
 // ============================================================

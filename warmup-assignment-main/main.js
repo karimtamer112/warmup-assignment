@@ -132,7 +132,30 @@ function getActiveTime(shiftDuration, idleTime) {
 // Returns: boolean
 // ============================================================
 function metQuota(date, activeTime) {
-    // TODO: Implement this function
+
+    let parts = activeTime.split(":");
+    let hours = Number(parts[0]);
+    let minutes = Number(parts[1]);
+
+    //Eid 
+    if (date >= "2025-04-10" && date <= "2025-04-30") {
+        if (hours >= 6) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    //Normal
+    if (hours > 8) {
+        return true;
+    }
+
+    if (hours === 8 && minutes >= 24) {
+        return true;
+    }
+
+    return false;
 }
 
 // ============================================================
